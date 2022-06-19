@@ -1,0 +1,47 @@
+---
+
+dependency:
+  name: galaxy
+  options:
+    ignore-certs: true
+    ignore-errors: true
+driver:
+  name: delegated
+  qemu_path: /usr/bin/qemu-system-x86_64
+  images_path: /var/lib/libvirt/images/ansible
+platforms:
+  - name: centos7-instance
+    selinux_relabel: true
+    base_image: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+    config_vm: true
+  - name: ubuntu1604-instance
+    selinux_relabel: true
+    base_image: https://cloud-images.ubuntu.com/releases/xenial/release/ubuntu-16.04-server-cloudimg-amd64-disk1.img
+    config_vm: true
+    upload_files:
+      - local_path: files/ens3.cfg
+        remote_path: /etc/network/interfaces.d/ens3.cfg
+scenario:
+  test_sequence:
+    - dependency
+    - lint
+    - destroy
+    - syntax
+    - create
+    - converge
+    - verify
+    - destroy
+provisioner:
+  name: ansible
+  env:
+    PY_COLORS: '1'
+    ANSIBLE_FORCE_COLOR: '1'
+lint: |
+    export ANSIBLE_ROLES_PATH=${MOLECULE_PROJECT_DIRECTORY}/..
+    export PY_COLORS=1
+    export ANSIBLE_FORCE_COLOR=1
+    yamllint .
+    ansible-lint .
+    flake8 .
+verifier:
+  name: ansible

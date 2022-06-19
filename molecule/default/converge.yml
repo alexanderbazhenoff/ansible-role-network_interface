@@ -1,0 +1,25 @@
+---
+
+- name: Converge
+  hosts: all
+  become: true
+  become_method: sudo
+
+  tasks:
+
+    - name: "kvm >>> converge | Include network role"
+      ansible.builtin.include_role:
+        name: "network_interface"
+      vars:
+        network_check_packages: true
+        network_bridge_interfaces:
+          - device: br0
+            type: bridge
+            address: "{{ ansible_default_ipv4.address }}"
+            netmask: "{{ ansible_default_ipv4.netmask }}"
+            bridge_ports: [ "{{ ansible_default_ipv4.interface }}" ]
+            gateway: "{{ ansible_default_ipv4.gateway }}"
+            nm_controlled: "no"
+            dns_nameservers: [ "{{ ansible_default_ipv4.gateway }}" ]
+            bridge_stp: "off"
+            bootproto: static

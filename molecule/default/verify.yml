@@ -1,0 +1,35 @@
+---
+
+- name: Verify
+  hosts: all
+  gather_facts: False
+  become: true
+  become_method: sudo
+
+  tasks:
+
+    - name: "kvm >>> verify | Ping"
+      ansible.builtin.ping:
+      register: ping_instance_results
+
+    - name: "kvm >>> verify | Ping public DNS to check default GW"
+      ansible.builtin.command: ping -c 1 -W 1 1.1.1.1
+      changed_when: false
+      register: ping_public_dns_results
+
+    - name: "kvm >>> verify | Ping domain host to check DNS resolving"
+      ansible.builtin.command: ping -c 1 -W 1 ya.ru
+      changed_when: false
+      register: ping_domain_host_results
+
+    - name: "default >>> verify | Assert all pings pass"
+      ansible.builtin.assert:
+        that:
+          - not ping_instance_results.failed
+          - not ping_public_dns_results.failed
+          - not ping_domain_host_results.failed
+        fail_msg: |
+          Error.
+          {% if (ping_instance_results.failed) %} Ping instance failed. {% endif %}
+          {% if (ping_public_dns_results.failed) %} Ping public DNS failed. {% endif %}
+          {% if (ping_domain_host_results.failed) %} Ping search domain host failed. {% endif %}
